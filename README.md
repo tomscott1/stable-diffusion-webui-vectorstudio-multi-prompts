@@ -1,3 +1,9 @@
+# stable-diffusion-webui-vectorstudio-multi-prompts
+
+This is just a combination of stable-diffusion-webui-vectorstudio and the prompts from file or textbox script from Automatic1111.
+
+---
+
 # stable-diffusion-webui-vectorstudio
 
 ## Purpose
