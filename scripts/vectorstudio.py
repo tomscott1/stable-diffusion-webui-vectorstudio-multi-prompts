@@ -309,6 +309,10 @@ class Script(scripts.Script):
         lines = [x for x in (x.strip() for x in prompt_txt.splitlines()) if x]
 
         p.do_not_save_grid = True
+         # Add the prompt from above
+        p.prompt += StyleDict[poUseColor]
+
+        PO_TO_CALL= self.check_and_install_potrace()
 
         job_count = 0
         jobs = []
@@ -365,47 +369,38 @@ class Script(scripts.Script):
                 p.seed = p.seed + (p.batch_size * p.n_iter)
             all_prompts += proc.all_prompts
             infotexts += proc.infotexts
-        # end prompts_from_file.py
-        ######################################################################################
-        p.do_not_save_grid = True
 
-        # Add the prompt from above
-        p.prompt += StyleDict[poUseColor]
-        
-        PO_TO_CALL= self.check_and_install_potrace()
+            mixedImages = []
+            try:
+                # vectorize
+                for i,img in enumerate(proc.images[::-1]): 
+                    if (not hasattr(img,"already_saved_as")) : continue
+                    fullfn = img.already_saved_as
+                    fullfnPath = pathlib.Path(fullfn)
+                    
+                    fullofpnm =  fullfnPath.with_suffix('.pnm') #for vectorizing
 
-        proc = process_images(p)
-        mixedImages = []
+                    fullofTPNG = fullfnPath.with_stem(fullfnPath.stem+ "_T")
+                    fullofTPNG = fullofTPNG.with_suffix('.png')
 
-        try:
-            # vectorize
-            for i,img in enumerate(proc.images[::-1]): 
-                if (not hasattr(img,"already_saved_as")) : continue
-                fullfn = img.already_saved_as
-                fullfnPath = pathlib.Path(fullfn)
-                
-                fullofpnm =  fullfnPath.with_suffix('.pnm') #for vectorizing
+                    fullof = pathlib.Path(fullfn).with_suffix('.'+poFormat)
 
-                fullofTPNG = fullfnPath.with_stem(fullfnPath.stem+ "_T")
-                fullofTPNG = fullofTPNG.with_suffix('.png')
+                    mixedImages.append([img,"PNG"])
 
-                fullof = pathlib.Path(fullfn).with_suffix('.'+poFormat)
+                    # set transparency to PNG, actually not vector feature, but people need it
+                    if poTransPNG:
+                        self.doTransPNG(poTransPNGEps, mixedImages, img, fullofTPNG, poTransPNGQuant)
 
-                mixedImages.append([img,"PNG"])
+                    if poDoVector:
+                        self.doVector(poFormat, poOpaque, poTight, poKeepPnm, poThreshold, PO_TO_CALL, img, fullofpnm, fullof, mixedImages)
 
-                # set transparency to PNG, actually not vector feature, but people need it
-                if poTransPNG:
-                    self.doTransPNG(poTransPNGEps, mixedImages, img, fullofTPNG, poTransPNGQuant)
-
-                if poDoVector:
-                    self.doVector(poFormat, poOpaque, poTight, poKeepPnm, poThreshold, PO_TO_CALL, img, fullofpnm, fullof, mixedImages)
-
-        except (Exception):
-            raise Exception("VectorStudio: Execution of Potrace failed, check filesystem, permissions, installation or settings (is image saving on?)")
+            except (Exception):
+                raise Exception("VectorStudio: Execution of Potrace failed, check filesystem, permissions, installation or settings (is image saving on?)")
 
         # return Processed(p, mixedImages, p.seed, proc.info)
         # return Processed(p, images, p.seed, "", all_prompts=all_prompts, infotexts=infotexts)
-        return Processed(p, mixedImages, images, p.seed, proc.info, all_prompts=all_prompts, infotexts=infotexts)
+        return Processed(p, mixedImages, p.seed, proc.info, all_prompts=all_prompts, infotexts=infotexts)
+        #  def __init__(self, p: StableDiffusionProcessing, images_list, seed=-1, info="", subseed=None, all_prompts=None, all_negative_prompts=None, all_seeds=None, all_subseeds=None, index_of_first_image=0, infotexts=None, comments=""):
 
     def doVector(self, poFormat, poOpaque, poTight, poKeepPnm, poThreshold, PO_TO_CALL, img, fullofpnm, fullof, mixedImages):
         # for vectorizing
