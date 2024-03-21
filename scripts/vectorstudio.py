@@ -183,23 +183,24 @@ class Script(scripts.Script):
     def ui(self, is_img2img):
         self.run_callback = False
 
-        # start prompts_from_file.py
-        checkbox_iterate = gr.Checkbox(label="Iterate seed every line", value=False, elem_id=self.elem_id("checkbox_iterate"))
-        checkbox_iterate_batch = gr.Checkbox(label="Use same random seed for all lines", value=False, elem_id=self.elem_id("checkbox_iterate_batch"))
-        prompt_position = gr.Radio(["start", "end"], label="Insert prompts at the", elem_id=self.elem_id("prompt_position"), value="start")
-
-        prompt_txt = gr.Textbox(label="List of prompt inputs", lines=1, elem_id=self.elem_id("prompt_txt"))
-        file = gr.File(label="Upload prompt inputs", type='binary', elem_id=self.elem_id("file"))
-
-        file.change(fn=load_prompt_file, inputs=[file], outputs=[file, prompt_txt, prompt_txt], show_progress=False)
-
-        # We start at one line. When the text changes, we jump to seven lines, or two lines if no \n.
-        # We don't shrink back to 1, because that causes the control to ignore [enter], and it may
-        # be unclear to the user that shift-enter is needed.
-        prompt_txt.change(lambda tb: gr.update(lines=7) if ("\n" in tb) else gr.update(lines=2), inputs=[prompt_txt], outputs=[prompt_txt], show_progress=False)
-        # end prompts_from_file.py
-
         with gr.Group():
+            with gr.Accordion("Prompt List", open=True):
+                # start prompts_from_file.py
+                checkbox_iterate = gr.Checkbox(label="Iterate seed every line", value=False, elem_id=self.elem_id("checkbox_iterate"))
+                checkbox_iterate_batch = gr.Checkbox(label="Use same random seed for all lines", value=False, elem_id=self.elem_id("checkbox_iterate_batch"))
+                prompt_position = gr.Radio(["start", "end"], label="Insert prompts at the", elem_id=self.elem_id("prompt_position"), value="start")
+
+                prompt_txt = gr.Textbox(label="List of prompt inputs", lines=1, elem_id=self.elem_id("prompt_txt"))
+                file = gr.File(label="Upload prompt inputs", type='binary', elem_id=self.elem_id("file"))
+
+                file.change(fn=load_prompt_file, inputs=[file], outputs=[file, prompt_txt, prompt_txt], show_progress=False)
+
+                # We start at one line. When the text changes, we jump to seven lines, or two lines if no \n.
+                # We don't shrink back to 1, because that causes the control to ignore [enter], and it may
+                # be unclear to the user that shift-enter is needed.
+                prompt_txt.change(lambda tb: gr.update(lines=7) if ("\n" in tb) else gr.update(lines=2), inputs=[prompt_txt], outputs=[prompt_txt], show_progress=False)
+                # end prompts_from_file.py
+
             with gr.Accordion("Vector Studio", open=False):
 
                 with gr.Row():
